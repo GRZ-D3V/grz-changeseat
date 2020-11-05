@@ -5,4 +5,4 @@ Disable seat shuffle
 
 Players can enter in vehicle from back doors (just by pressing F)
 
-Iwa#3546 for support
+Made by GRZ
