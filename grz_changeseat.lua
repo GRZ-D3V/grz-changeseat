@@ -8,11 +8,12 @@ end
 
 Citizen.CreateThread(function()
 	while true do
+		local ped = PlayerPedId() --one ped is enough my guy, no need to call it 4 million times
 		Citizen.Wait(0)
-		if IsPedInAnyVehicle(GetPlayerPed(-1), false) and disableShuffle then
-			if GetPedInVehicleSeat(GetVehiclePedIsIn(GetPlayerPed(-1), false), 0) == GetPlayerPed(-1) then
-				if GetIsTaskActive(GetPlayerPed(-1), 165) then
-					SetPedIntoVehicle(GetPlayerPed(-1), GetVehiclePedIsIn(GetPlayerPed(-1), false), 0)
+		if IsPedInAnyVehicle(ped, false) and disableShuffle then
+			if GetPedInVehicleSeat(GetVehiclePedIsIn(ped, false), 0) == ped then
+				if GetIsTaskActive(ped, 165) then
+					SetPedIntoVehicle(ped, GetVehiclePedIsIn(ped, false), 0)
 				end
 			end
 		end
@@ -53,10 +54,10 @@ Citizen.CreateThread(function()
 				local plyCoords = GetEntityCoords(ped, false)
         		local doorDistances = {}
 					
-        		for k, door in pairs(doors) do
-          			local doorBone = GetEntityBoneIndexByName(vehicle, door[1])
+        		for k, door in ipairs(doors) do
+          			local doorBone = GetEntityBoneIndexByName(vehicle, door[k])
           			local doorPos = GetWorldPositionOfEntityBone(vehicle, doorBone)
-          			local distance = Vdist(plyCoords.x, plyCoords.y, plyCoords.z, doorPos.x, doorPos.y, doorPos.z)
+          			local distance = #(plyCoords-doorPos)
 						
           			table.insert(doorDistances, distance)
         		end
@@ -79,13 +80,14 @@ end)
 
 -- KEYBIND CHANGEMENT PLACE VEHICLE
 -- KEYBIND FOR CHANGESEAT
+--[[
 Citizen.CreateThread(function()
     while true do
         local plyPed = PlayerPedId()
         if IsPedSittingInAnyVehicle(plyPed) then
             local plyVehicle = GetVehiclePedIsIn(plyPed, false)
 			CarSpeed = GetEntitySpeed(plyVehicle) * 3.6 -- On définit la vitesse du véhicule en km/h -- Get car speed
-			if CarSpeed < 60.0 then -- On ne peux pas changer de place si la vitesse du véhicule est au dessus ou égale à 60 km/h -- Can't change place when car is 60 km/h +
+			if CarSpeed < 60.0 then -- On ne peux pas changer de place si la vitesse du véhicule est au dessus ou égale à 60 km/h -- Can't change place when car is 60 km/h 
 				if IsControlJustReleased(0, 157) then -- conducteur -- driver
 					SetPedIntoVehicle(plyPed, plyVehicle, -1)
 					Citizen.Wait(10)
@@ -107,5 +109,49 @@ Citizen.CreateThread(function()
 		Citizen.Wait(10) -- anti crash
 	end
 end)
+]]
 
--- By GRZ
+function isEligibleForSwitch() 
+	local plyPed <const> = PlayerPedId()
+	local plyVehicle <const> = GetVehiclePedIsIn(plyPed, false)
+	if IsPedSittingInAnyVehicle(plyPed) then
+		CarSpeed = GetEntitySpeed(plyVehicle) * 3.6 
+		if CarSpeed < 60.0 then
+			return true, plyVehicle, plyPed
+		end
+	end
+return false
+end
+
+RegisterCommand("driverEnter", function(source, args) 
+	local valid, veh, ped = isEligibleForSwitch()
+	if valid then
+		SetPedIntoVehicle(ped, veh, -1)
+	end
+end)
+RegisterCommand("fRightEnter", function(source, args) 
+	local valid, veh, ped = isEligibleForSwitch()
+	if valid then
+		SetPedIntoVehicle(ped, veh, 0)
+	end
+end)
+RegisterCommand("bLeftEnter", function(source, args) 
+	local valid, veh, ped = isEligibleForSwitch()
+	if valid then
+		SetPedIntoVehicle(ped, veh, 1)
+	end
+end)
+RegisterCommand("bRightEnter", function(source, args) 
+	local valid, veh, ped = isEligibleForSwitch()
+	if valid then
+		SetPedIntoVehicle(ped, veh, 2)
+	end
+end)
+
+
+
+RegisterKeyMapping("driverEnter", "Enter front left seat", "keyboard", "1")
+RegisterKeyMapping("fRightEnter", "Enter front right seat", "keyboard", "2")
+RegisterKeyMapping("bLeftEnter", "Enter back left seat", "keyboard", "3")
+RegisterKeyMapping("bRightEnter", "Enter back right seat", "keyboard", "4")
+-- By GRZ & WowJesus
